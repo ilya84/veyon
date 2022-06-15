@@ -262,16 +262,28 @@ void RemoteAccessWidgetToolBar::updateScreens()
 		showAllScreens->setCheckable(true);
 		showAllScreens->setChecked(checkedScreenName.isEmpty() ||
 									 checkedScreenName == showAllScreens->text());
-
 		menu->addSeparator();
+
+		int minX, minY; bool initMins=false;
+		for (const auto& screen : screens)
+		{
+			if (!initMins) {
+				minX=screen.geometry.x();
+				minY=screen.geometry.y();
+				initMins=true;
+			}
+			if (screen.geometry.x() < minX) minX=screen.geometry.x();
+			if (screen.geometry.y() < minY) minY=screen.geometry.y();
+		}
 
 		for (const auto& screen : screens)
 		{
 			const auto action = menu->addAction(screen.name, this, [=]() {
-				m_parent->vncView()->setViewport(screen.geometry);
+				QRect realGeometry = screen.geometry;
+				realGeometry.moveTo(screen.geometry.x()-minX,screen.geometry.y()-minY);
+				m_parent->vncView()->setViewport(realGeometry);
 			});
 			action->setCheckable(true);
-			if(action->text() == checkedScreenName)
 			{
 				action->setChecked(true);
 			}
